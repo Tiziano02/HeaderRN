@@ -1,28 +1,105 @@
+#include "Input.hpp"
 #include "Rete.hpp"
-#include <random>
+#include "Simulazione.hpp"
+#include "Sinapsi.hpp"
+#include "UnitaSI.hpp"
 
-int main(){
-    
-    Neurone n1(0, - 49.0 * mV, -50.0 * mV, -65.0 * mV, -70.0 * mV, 10.0 * mS, 5.0 * mS);
-    Neurone n2(1, - 65.0 * mV, -50.0 * mV, -65.0 * mV, -70.0 * mV, 10.0 * mS, 5.0 * mS);
+#include <iostream>
+#include <vector>
 
-    Sinapsi s1(0, 1, 40.0 * mV, 5.0 * mS); // sinapsi da n1 a n2 con peso 0.5 e tau 5 ms
+int main() {
+
+    // =========================================================
+    // PARAMETRI RETE
+    // =========================================================
+
+    const int N = 20;
+
+    // =========================================================
+    // CREAZIONE RETE
+    // =========================================================
 
     Rete rete;
 
-    rete.aggiungiNeurone(n1);
-    rete.aggiungiNeurone(n2);
-    rete.connettiNeuroni(s1); // connetti n1 a n2 con peso 0.5 e tau 5 ms
+    // creo i neuroni
+    for (int i = 0; i < N; ++i) {
 
-    // usa le unità di misura corrette per il passo temporale e la durata
-    double dt = 0.1 * mS;      // 0.1 millisecondo
-    double T = 10.0 * s;    // 10.0 secondi
+        Neurone neurone(
+            i,                // id
+            -65.0 * mV,       // V iniziale
+            -50.0 * mV,       // soglia
+            -65.0 * mV,       // riposo
+            -70.0 * mV,       // reset
+            1.0 * M * Ohm,    // resistenza
+            100.0 * p * F,    // capacità
+            5.0 * mS          // refrattario
+        );
 
-    rete.simulazione(
-        dt,
-        T,
+        rete.aggiungiNeurone(neurone);
+    }
+
+    // =========================================================
+    // CONNESSIONI RING
+    // =========================================================
+
+    for (int i = 0; i < N; ++i) {
+
+        int next = (i + 1) % N;
+
+        Sinapsi s(
+            1.0,              // peso
+            18.0 * n * A,     // Ipeak
+            i,                // pre
+            next,             // post
+            5.0 * mS          // tau sinaptica
+        );
+
+        rete.connettiNeuroni(s);
+    }
+
+    // =========================================================
+    // PARAMETRI SIMULAZIONE
+    // =========================================================
+
+    double dt = 0.1 * mS;
+    double T  = 500.0 * mS;
+
+    Simulazione sim(rete, dt, T);
+
+    // =========================================================
+    // INPUT ESTERNO
+    // =========================================================
+    // Stimolo SOLO il neurone 0
+    // per innescare l'onda nel ring
+
+    int nSteps = static_cast<int>(T / dt);
+
+    std::vector<double> inputN0(nSteps, 0.0);
+
+    // impulso iniziale
+    for (int i = 10; i < 80; ++i) {
+        inputN0[i] = 25.0 * n * A;
+    }
+
+    Input in0;
+    in0.id = 0;
+    in0.valori = inputN0;
+
+    std::vector<Input> inputs = {in0};
+
+    sim.aggiungiInputEsterni(inputs);
+
+    // =========================================================
+    // AVVIO SIMULAZIONE
+    // =========================================================
+
+    sim.avviaSimulazione(
         "potenziali.txt",
         "firing.txt",
         "sinapsi.txt"
     );
+
+    std::cout << "Simulazione completata.\n";
+
+    return 0;
 }
