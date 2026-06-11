@@ -16,13 +16,14 @@
 ## Inputs
 
 - [ ] Stochastic inputs
+- [ ] "on-the-fly" calculate inputs
 - [ ] Background noise generators
+- [ ] Multiple external inputs per neuron
 
 ## Simulation
 
-- [ ] Multiple external inputs per neuron
+- [ ]  
 
 ## Analysis
 
 - [ ] Python analysis toolkit
-- [ ] Population firing rate analysis
