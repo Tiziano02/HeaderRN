@@ -191,20 +191,6 @@ The simulation does not know:
 
 ---
 
-# Simulation Workflow
-
-A simulation typically follows the sequence below:
-
-1. Create a network.
-2. Add neurons to the network.
-3. Create synaptic connections.
-4. Create a simulation object.
-5. Define and inject external stimuli.
-6. Run the simulation.
-7. Export simulation data.
-
----
-
 # Output Format
 
 Simulation data is exported to three binary files:
@@ -217,29 +203,4 @@ Each file begins with a 4-byte `int32` header containing the number of columns (
 
 ---
 
-# Current Scope
 
-HeaderRN currently focuses on:
-
-* small and medium-sized spiking neural networks
-* educational applications
-* rapid prototyping
-* experimentation with neural dynamics
-
-The framework prioritizes clarity and extensibility over aggressive optimization.
-
----
-
-# Future Extensions
-
-The current architecture was designed to support future additions, including:
-
-* transmission delays
-* synaptic plasticity
-* alternative neuron models
-* sparse network optimizations
-* large-scale simulations
-* multiple simulation runs on the same object
-* additional stimulus types (stochastic, arbitrary waveforms)
-
-These extensions can be introduced while preserving the existing high-level structure.
