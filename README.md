@@ -130,7 +130,6 @@ Future developments include:
 - [ ] Adjacency list for network topology
 - [ ] Complete framework for data analysis
 - [ ] Additional stimulus types (stochastic, arbitrary waveforms)
-- [ ] Multiple simulation runs on the same object
 
 A complete roadmap is available in TODO.md.
 
