@@ -27,8 +27,8 @@ struct rigaRegistroStimolo {
     size_t indexNeurone; // usato nel loop caldo
     Tipo_stimolo tipo;   // dice QUALE database guardare
     size_t rigaDB;       // dice QUALE riga di quel database guardare
-    double stepStart;
-    double stepEnd;
+    int stepStart;
+    int stepEnd;
 };
 
 #endif
