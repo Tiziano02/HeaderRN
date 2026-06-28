@@ -6,14 +6,14 @@
 #include <vector>
 
 struct configConductanceSyn {
-    double peso   = 1.0;
-    double gpeak  = 1e-9;   // conduttanza di picco per peso unitario [S]
-    double gsyn   = 0.0;    // conduttanza iniziale [S]
-    double tau    = 5e-3;   // costante di tempo del decadimento [s]
-    double delay  = 1e-3;   // ritardo sinaptico [s]
-    double E_rev  = 0.0;    // potenziale di inversione [V]
-                            //   ~  0 mV  -> eccitatoria (AMPA/NMDA)
-                            //   ~ -70 mV -> inibitoria  (GABA-A)
+    double peso = 1.0;
+    double gpeak = 1e-9; // conduttanza di picco per peso unitario [S]
+    double gsyn = 0.0;   // conduttanza iniziale [S]
+    double tau = 5e-3;   // costante di tempo del decadimento [s]
+    double delay = 1e-3; // ritardo sinaptico [s]
+    double E_rev = 0.0;  // potenziale di inversione [V]
+                         //   ~  0 mV  -> eccitatoria (AMPA/NMDA)
+                         //   ~ -70 mV -> inibitoria  (GABA-A)
 };
 
 /*
@@ -45,8 +45,8 @@ class ConductanceSyn {
     size_t indexPre_, indexPost_;
     double peso_;
     double gpeak_;
-    double gsyn_;   // conduttanza sinaptica corrente [S]
-    double Isyn_;   // corrente sinaptica corrente [A]  (= gsyn_ * (V_post - E_rev))
+    double gsyn_; // conduttanza sinaptica corrente [S]
+    double Isyn_; // corrente sinaptica corrente [A]  (= gsyn_ * (V_post - E_rev))
     double tau_;
     double delay_;
     double E_rev_;
@@ -59,7 +59,7 @@ class ConductanceSyn {
     void update(double dt, bool preFired, double V_post);
 
     // metodi setter
-    void setIndexPre(size_t idx)  { indexPre_  = idx; }
+    void setIndexPre(size_t idx) { indexPre_ = idx; }
     void setIndexPost(size_t idx) { indexPost_ = idx; }
     void setDelayRing(double dt) {
         delayStep_ = static_cast<size_t>(std::round(delay_ / dt));
@@ -67,21 +67,14 @@ class ConductanceSyn {
     }
 
     // metodi getter
-    double getCurrent()    const { return Isyn_;     }
-    int    getIdPre()      const { return idPre_;    }
-    int    getIdPost()     const { return idPost_;   }
-    size_t getIndexPre()   const { return indexPre_; }
-    size_t getIndexPost()  const { return indexPost_;}
+    double getCurrent() const { return Isyn_; }
+    int getIdPre() const { return idPre_; }
+    int getIdPost() const { return idPost_; }
+    size_t getIndexPre() const { return indexPre_; }
+    size_t getIndexPost() const { return indexPost_; }
 
   public:
-    ConductanceSyn(size_t indexPre, size_t indexPost, int idPre, int idPost,
-                   configConductanceSyn config)
-        : idPre_(idPre), idPost_(idPost),
-          indexPre_(indexPre), indexPost_(indexPost),
-          peso_(config.peso), gpeak_(config.gpeak),
-          gsyn_(0.0), Isyn_(0.0),
-          tau_(config.tau), delay_(config.delay), E_rev_(config.E_rev),
-          presentStep_(0), delayStep_(0) {}
+    ConductanceSyn(size_t indexPre, size_t indexPost, int idPre, int idPost, configConductanceSyn config) : idPre_(idPre), idPost_(idPost), indexPre_(indexPre), indexPost_(indexPost), peso_(config.peso), gpeak_(config.gpeak), gsyn_(0.0), Isyn_(0.0), tau_(config.tau), delay_(config.delay), E_rev_(config.E_rev), presentStep_(0), delayStep_(0) {}
 
     ~ConductanceSyn() = default;
 

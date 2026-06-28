@@ -9,6 +9,7 @@ struct configExp {
     double V_ThresholdSpikeMax = -35.0 * mV;
     double V_rest = -65.0 * mV;
     double V_reset = -70.0 * mV;
+    double deltaT = 2.5 * mV;
     double R = 1.0 * Mohm;
     double C = 100.0 * p * F;
     double timeAbsolute = 5.0 * ms;
@@ -74,7 +75,12 @@ class Exp {
   public:
     ~Exp() = default;
 
-    Exp(int id, char typeIntegratore, configExp config) : id_(id), V_(config.V_), Vth_(config.V_th), Vth0_(config.V_th), VthSpikeMax_(config.V_ThresholdSpikeMax), Vrest_(config.V_rest), Vreset_(config.V_reset), R_(config.R), C_(config.C), tau_(config.R * config.C), timeAbsolute_(config.timeAbsolute), timeRelative_(config.timeRelative), tempoRR_(0.0), tauRelative_(config.timeRelative / 3), fired_(false), tipoIntegratore_(typeIntegratore) {}
+    Exp(int id, char typeIntegratore, configExp config)
+        : id_(id), V_(config.V_), Vth_(config.V_th), Vth0_(config.V_th), VthSpikeMax_(config.V_ThresholdSpikeMax),
+          Vrest_(config.V_rest), Vreset_(config.V_reset), R_(config.R), C_(config.C), tau_(config.R * config.C),
+          timeAbsolute_(config.timeAbsolute), timeRelative_(config.timeRelative), tempoRR_(0.0),
+          tauRelative_(config.timeRelative / 3), DeltaT_(config.deltaT), fired_(false),
+          tipoIntegratore_(typeIntegratore) {}
 
     friend class Rete;
 };

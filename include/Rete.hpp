@@ -47,10 +47,10 @@ class Rete {
 
   private:
     std::vector<TypeNeuron> neuroni_;
-    std::vector<TypeSyn>    sinapsi_;
+    std::vector<TypeSyn> sinapsi_;
     std::vector<double> stimoli_;
     std::vector<double> inputTotale_;
-    std::unordered_map<int, size_t> idToIndex_;   // mappa ID neurone -> indice
+    std::unordered_map<int, size_t> idToIndex_;    // mappa ID neurone -> indice
     std::unordered_map<int, size_t> idToIndexSyn_; // mappa ID sinapsi -> indice
 
     int prossimoIdSyn_ = 0; // contatore ID sinapsi, analogo all'ID neurone
@@ -64,17 +64,17 @@ class Rete {
     void addStimolo(size_t i, double value) { stimoli_[i] += value; }
 
     // metodi getter
-    const std::vector<double> &getPointerStatoNeuroni() const;
-    const std::vector<double> &getPointerStatoFiring()  const;
-    const std::vector<double> &getPointerStatoSinapsi() const;
+    const std::vector<double>& getPointerStatoNeuroni() const;
+    const std::vector<double>& getPointerStatoFiring() const;
+    const std::vector<double>& getPointerStatoSinapsi() const;
 
     size_t getNumNeuroni() const { return neuroni_.size(); }
     size_t getNumSinapsi() const { return sinapsi_.size(); }
     size_t getIndex(int id) const { return idToIndex_.at(id); }
 
     // metodi di controllo
-    bool hasNeurone(int id)  const { return idToIndex_.count(id)    > 0; }
-    bool hasSinapsi(int id)  const { return idToIndexSyn_.count(id) > 0; }
+    bool hasNeurone(int id) const { return idToIndex_.count(id) > 0; }
+    bool hasSinapsi(int id) const { return idToIndexSyn_.count(id) > 0; }
 
     // metodi operativi privati
     void step(double dt);
@@ -86,9 +86,9 @@ class Rete {
 
     // --- Neuroni ---
 
-    void aggiungiNeurone(int ID, char typeIntegratore, const TypeConfig &configurazione);
+    void aggiungiNeurone(int ID, char typeIntegratore, const TypeConfig& configurazione);
     void modificaIntegratoreNeurone(int ID, char typeIntegratore);
-    void modificaParametriNeurone(int ID, const TypeConfig &configurazione);
+    void modificaParametriNeurone(int ID, const TypeConfig& configurazione);
 
     // --- Sinapsi ---
 
@@ -104,7 +104,7 @@ class Rete {
      *
      * TypeConfigSyn = std::variant<configCurrentSyn, configConductanceSyn>
      */
-    int  connettiNeuroni(int IDpre, int IDpost, const TypeConfigSyn &configurazioneSinapsi);
+    int connettiNeuroni(int IDpre, int IDpost, const TypeConfigSyn& configurazioneSinapsi);
 
     /*
      * modificaSinapsi — aggiorna i parametri di una sinapsi esistente.
@@ -113,7 +113,7 @@ class Rete {
      * La configurazione deve essere dello stesso tipo della sinapsi originale;
      * se non lo è viene stampato un errore e non viene modificato nulla.
      */
-    void modificaSinapsi(int IDsin, const TypeConfigSyn &configurazioneSinapsi);
+    void modificaSinapsi(int IDsin, const TypeConfigSyn& configurazioneSinapsi);
 
     ~Rete() = default;
 

@@ -33,10 +33,10 @@ Rete::Rete(int N, Label_Type_Neuron typeNeurone, char typeintegratore) {
 // Neuroni
 // ─────────────────────────────────────────────────────────────────────────────
 
-void Rete::aggiungiNeurone(int id, char typeIntegratore, const TypeConfig &configurazione) {
+void Rete::aggiungiNeurone(int id, char typeIntegratore, const TypeConfig& configurazione) {
 
     std::visit(
-        [&](const auto &config) {
+        [&](const auto& config) {
             if (hasNeurone(id)) {
                 std::cerr << "[Rete] errore: neurone con ID " << id << " già presente.\n";
                 return;
@@ -65,10 +65,10 @@ void Rete::modificaIntegratoreNeurone(int id, char typeIntegratore) {
         return;
     }
     size_t index = getIndex(id);
-    std::visit([&](auto &n) { n.tipoIntegratore_ = typeIntegratore; }, neuroni_[index]);
+    std::visit([&](auto& n) { n.tipoIntegratore_ = typeIntegratore; }, neuroni_[index]);
 }
 
-void Rete::modificaParametriNeurone(int id, const TypeConfig &configurazione) {
+void Rete::modificaParametriNeurone(int id, const TypeConfig& configurazione) {
     if (!hasNeurone(id)) {
         std::cerr << "[Rete] errore: neurone con ID " << id << " non esiste.\n";
         return;
@@ -77,38 +77,39 @@ void Rete::modificaParametriNeurone(int id, const TypeConfig &configurazione) {
     size_t index = getIndex(id);
 
     std::visit(
-        [&](auto &n) {
+        [&](auto& n) {
             using T = std::decay_t<decltype(n)>;
             if constexpr (std::is_same_v<T, LIF>) {
                 if (auto cfg = std::get_if<configLIF>(&configurazione)) {
-                    n.V_           = cfg->V_;
-                    n.Vth_         = cfg->V_th;
-                    n.Vth0_        = cfg->V_th;
+                    n.V_ = cfg->V_;
+                    n.Vth_ = cfg->V_th;
+                    n.Vth0_ = cfg->V_th;
                     n.VthSpikeMax_ = cfg->V_ThresholdSpikeMax;
-                    n.Vrest_       = cfg->V_rest;
-                    n.Vreset_      = cfg->V_reset;
-                    n.R_           = cfg->R;
-                    n.C_           = cfg->C;
-                    n.tau_         = cfg->R * cfg->C;
-                    n.timeAbsolute_= cfg->timeAbsolute;
-                    n.timeRelative_= cfg->timeRelative;
+                    n.Vrest_ = cfg->V_rest;
+                    n.Vreset_ = cfg->V_reset;
+                    n.R_ = cfg->R;
+                    n.C_ = cfg->C;
+                    n.tau_ = cfg->R * cfg->C;
+                    n.timeAbsolute_ = cfg->timeAbsolute;
+                    n.timeRelative_ = cfg->timeRelative;
                     n.tauRelative_ = cfg->timeRelative / 3;
                 } else {
                     std::cerr << "[Rete] errore: configurazione incompatibile per neurone LIF.\n";
                 }
             } else if constexpr (std::is_same_v<T, Exp>) {
                 if (auto cfg = std::get_if<configExp>(&configurazione)) {
-                    n.V_           = cfg->V_;
-                    n.Vth_         = cfg->V_th;
-                    n.Vth0_        = cfg->V_th;
+                    n.V_ = cfg->V_;
+                    n.Vth_ = cfg->V_th;
+                    n.Vth0_ = cfg->V_th;
                     n.VthSpikeMax_ = cfg->V_ThresholdSpikeMax;
-                    n.Vrest_       = cfg->V_rest;
-                    n.Vreset_      = cfg->V_reset;
-                    n.R_           = cfg->R;
-                    n.C_           = cfg->C;
-                    n.tau_         = cfg->R * cfg->C;
-                    n.timeAbsolute_= cfg->timeAbsolute;
-                    n.timeRelative_= cfg->timeRelative;
+                    n.Vrest_ = cfg->V_rest;
+                    n.Vreset_ = cfg->V_reset;
+                    n.DeltaT_ = cfg->deltaT;
+                    n.R_ = cfg->R;
+                    n.C_ = cfg->C;
+                    n.tau_ = cfg->R * cfg->C;
+                    n.timeAbsolute_ = cfg->timeAbsolute;
+                    n.timeRelative_ = cfg->timeRelative;
                     n.tauRelative_ = cfg->timeRelative / 3;
                 } else {
                     std::cerr << "[Rete] errore: configurazione incompatibile per neurone Exp.\n";
@@ -117,9 +118,9 @@ void Rete::modificaParametriNeurone(int id, const TypeConfig &configurazione) {
         },
         neuroni_[index]);
 
-    statoNeuroni_[index] = std::visit([](const auto &n) { return n.getPotential(); }, neuroni_[index]);
-    bool fire = std::visit([](const auto &n) { return n.hasFired(); }, neuroni_[index]);
-    statoFiring_[index]  = fire ? 1.0 : 0.0;
+    statoNeuroni_[index] = std::visit([](const auto& n) { return n.getPotential(); }, neuroni_[index]);
+    bool fire = std::visit([](const auto& n) { return n.hasFired(); }, neuroni_[index]);
+    statoFiring_[index] = fire ? 1.0 : 0.0;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -133,27 +134,25 @@ void Rete::modificaParametriNeurone(int id, const TypeConfig &configurazione) {
  * Questo risolve il problema di identificazione quando esistono più sinapsi
  * tra la stessa coppia (IDpre, IDpost): ogni sinapsi ha un ID indipendente.
  */
-int Rete::connettiNeuroni(int IDpre, int IDpost, const TypeConfigSyn &configurazioneSinapsi) {
+int Rete::connettiNeuroni(int IDpre, int IDpost, const TypeConfigSyn& configurazioneSinapsi) {
 
     if (!hasNeurone(IDpre) || !hasNeurone(IDpost)) {
-        std::cerr << "[Rete] errore: uno o entrambi i neuroni (pre=" << IDpre
-                  << ", post=" << IDpost << ") non esistono nella rete.\n";
+        std::cerr << "[Rete] errore: uno o entrambi i neuroni (pre=" << IDpre << ", post=" << IDpost
+                  << ") non esistono nella rete.\n";
         return -1; // ID invalido come segnale di errore
     }
 
-    size_t indexPre  = idToIndex_[IDpre];
+    size_t indexPre = idToIndex_[IDpre];
     size_t indexPost = idToIndex_[IDpost];
 
     std::visit(
-        [&](const auto &config) {
+        [&](const auto& config) {
             using T = std::decay_t<decltype(config)>;
 
             if constexpr (std::is_same_v<T, configCurrentSyn>) {
-                sinapsi_.emplace_back(std::in_place_type<CurrentSyn>,
-                                      indexPre, indexPost, IDpre, IDpost, config);
+                sinapsi_.emplace_back(std::in_place_type<CurrentSyn>, indexPre, indexPost, IDpre, IDpost, config);
             } else if constexpr (std::is_same_v<T, configConductanceSyn>) {
-                sinapsi_.emplace_back(std::in_place_type<ConductanceSyn>,
-                                      indexPre, indexPost, IDpre, IDpost, config);
+                sinapsi_.emplace_back(std::in_place_type<ConductanceSyn>, indexPre, indexPost, IDpre, IDpost, config);
             }
         },
         configurazioneSinapsi);
@@ -180,7 +179,7 @@ int Rete::connettiNeuroni(int IDpre, int IDpost, const TypeConfigSyn &configuraz
  * Se il tipo di configurazione non corrisponde al tipo della sinapsi esistente
  * viene stampato un errore e non viene modificato nulla.
  */
-void Rete::modificaSinapsi(int IDsin, const TypeConfigSyn &configurazioneSinapsi) {
+void Rete::modificaSinapsi(int IDsin, const TypeConfigSyn& configurazioneSinapsi) {
 
     if (!hasSinapsi(IDsin)) {
         std::cerr << "[Rete] errore: sinapsi con ID " << IDsin << " non esiste.\n";
@@ -190,14 +189,14 @@ void Rete::modificaSinapsi(int IDsin, const TypeConfigSyn &configurazioneSinapsi
     size_t index = idToIndexSyn_[IDsin];
 
     std::visit(
-        [&](auto &syn) {
+        [&](auto& syn) {
             using TSyn = std::decay_t<decltype(syn)>;
 
             if constexpr (std::is_same_v<TSyn, CurrentSyn>) {
                 if (auto cfg = std::get_if<configCurrentSyn>(&configurazioneSinapsi)) {
-                    syn.peso_  = cfg->peso;
+                    syn.peso_ = cfg->peso;
                     syn.Ipeak_ = cfg->Ipeak;
-                    syn.tau_   = cfg->tau;
+                    syn.tau_ = cfg->tau;
                     syn.delay_ = cfg->delay;
                     // prepare() non è ancora stato chiamato, quindi il ring non esiste ancora:
                     // basta aggiornare delay_ e sarà prepare() a costruire il ring con il dt corretto.
@@ -207,9 +206,9 @@ void Rete::modificaSinapsi(int IDsin, const TypeConfigSyn &configurazioneSinapsi
                 }
             } else if constexpr (std::is_same_v<TSyn, ConductanceSyn>) {
                 if (auto cfg = std::get_if<configConductanceSyn>(&configurazioneSinapsi)) {
-                    syn.peso_  = cfg->peso;
+                    syn.peso_ = cfg->peso;
                     syn.gpeak_ = cfg->gpeak;
-                    syn.tau_   = cfg->tau;
+                    syn.tau_ = cfg->tau;
                     syn.E_rev_ = cfg->E_rev;
                     syn.delay_ = cfg->delay;
                 } else {
@@ -226,8 +225,8 @@ void Rete::modificaSinapsi(int IDsin, const TypeConfigSyn &configurazioneSinapsi
 // ─────────────────────────────────────────────────────────────────────────────
 
 void Rete::prepare(double dt) {
-    for (auto &s : sinapsi_) {
-        std::visit([&](auto &syn) { syn.setDelayRing(dt); }, s);
+    for (auto& s : sinapsi_) {
+        std::visit([&](auto& syn) { syn.setDelayRing(dt); }, s);
     }
 }
 
@@ -245,15 +244,13 @@ void Rete::step(double dt) {
 
     std::fill(inputTotale_.begin(), inputTotale_.end(), 0.0);
 
-    for (auto &synVar : sinapsi_) {
+    for (auto& synVar : sinapsi_) {
 
         std::visit(
-            [&](auto &syn) {
+            [&](auto& syn) {
                 using TSyn = std::decay_t<decltype(syn)>;
 
-                bool preFired = std::visit(
-                    [](const auto &n) { return n.hasFired(); },
-                    neuroni_[syn.getIndexPre()]);
+                bool preFired = std::visit([](const auto& n) { return n.hasFired(); }, neuroni_[syn.getIndexPre()]);
 
                 if constexpr (std::is_same_v<TSyn, CurrentSyn>) {
                     // Current-based: update autonomo, non serve V_post
@@ -261,9 +258,8 @@ void Rete::step(double dt) {
 
                 } else if constexpr (std::is_same_v<TSyn, ConductanceSyn>) {
                     // Conductance-based: serve il potenziale del neurone post-sinaptico
-                    double V_post = std::visit(
-                        [](const auto &n) { return n.getPotential(); },
-                        neuroni_[syn.getIndexPost()]);
+                    double V_post =
+                        std::visit([](const auto& n) { return n.getPotential(); }, neuroni_[syn.getIndexPost()]);
                     syn.update(dt, preFired, V_post);
                 }
 
@@ -274,20 +270,20 @@ void Rete::step(double dt) {
 
     for (size_t i = 0; i < neuroni_.size(); ++i) {
         inputTotale_[i] += stimoli_[i];
-        std::visit([&](auto &n) { n.update(inputTotale_[i], dt); }, neuroni_[i]);
+        std::visit([&](auto& n) { n.update(inputTotale_[i], dt); }, neuroni_[i]);
     }
 }
 
 void Rete::aggiornaStatoRete() {
 
     for (size_t i = 0; i < neuroni_.size(); i++) {
-        statoNeuroni_[i] = std::visit([](const auto &n) { return n.getPotential(); }, neuroni_[i]);
-        bool fire = std::visit([](const auto &n) { return n.hasFired(); }, neuroni_[i]);
-        statoFiring_[i]  = fire ? 1.0 : 0.0;
+        statoNeuroni_[i] = std::visit([](const auto& n) { return n.getPotential(); }, neuroni_[i]);
+        bool fire = std::visit([](const auto& n) { return n.hasFired(); }, neuroni_[i]);
+        statoFiring_[i] = fire ? 1.0 : 0.0;
     }
 
     for (size_t i = 0; i < sinapsi_.size(); i++) {
-        statoSinapsi_[i] = std::visit([](const auto &s) { return s.getCurrent(); }, sinapsi_[i]);
+        statoSinapsi_[i] = std::visit([](const auto& s) { return s.getCurrent(); }, sinapsi_[i]);
     }
 }
 
@@ -295,6 +291,6 @@ void Rete::aggiornaStatoRete() {
 // Getter
 // ─────────────────────────────────────────────────────────────────────────────
 
-const std::vector<double> &Rete::getPointerStatoNeuroni() const { return statoNeuroni_; }
-const std::vector<double> &Rete::getPointerStatoFiring()  const { return statoFiring_;  }
-const std::vector<double> &Rete::getPointerStatoSinapsi() const { return statoSinapsi_; }
+const std::vector<double>& Rete::getPointerStatoNeuroni() const { return statoNeuroni_; }
+const std::vector<double>& Rete::getPointerStatoFiring() const { return statoFiring_; }
+const std::vector<double>& Rete::getPointerStatoSinapsi() const { return statoSinapsi_; }

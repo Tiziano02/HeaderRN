@@ -17,7 +17,7 @@
  *  - Il metodo di Eulero è stabile se dt << tau (tipicamente dt < tau/10).
  */
 void Exp::euleroInAvanti(double correnteTotale, double dt) {
-    
+
     double termExp = DeltaT_ * std::exp((V_ - Vth_) / DeltaT_);
     double dV = (-(V_ - Vrest_) + termExp + R_ * correnteTotale) / tau_;
     V_ += dV * dt;
