@@ -6,7 +6,6 @@
 
 #include <variant>
 
-// Specchio esatto di Label_Type_Neuron in Neurone.hpp
 enum class Label_Type_Syn { Current, Conductance };
 
 // Variant dei tipi di configurazione (passato dall'utente a connettiNeuroni)

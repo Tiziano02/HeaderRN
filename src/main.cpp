@@ -32,7 +32,7 @@ static void test_nuova_creazione_rete() {
     intestazione("TEST 1 — Nuova modalità di creazione rete (LIF + CurrentSyn)");
 
     // 1. Rete con 4 neuroni LIF di default, integratore Eulero
-    Rete rete(4, Label_Type_Neuron::LIF, 'E');
+    Rete rete(4, NeuronModel::LIF, 'E');
     ok("Rete(4, LIF, 'E') creata");
 
     // 2. Modifica parametri del neurone 0 (soglia più alta)
@@ -82,11 +82,13 @@ static void test_nuova_creazione_rete() {
     ok("modificaSinapsi(idSyn01) — peso aggiornato a 1.0, delay a 0.5ms");
 
     // 6. Errore atteso: ID sinapsi inesistente
-    info("Tentativo modificaSinapsi con ID inesistente (atteso errore su stderr):");
+    info("Tentativo modificaSinapsi con ID inesistente (atteso errore su "
+         "stderr):");
     rete.modificaSinapsi(999, cfgSyn01_mod);
 
     // 7. Errore atteso: neurone inesistente
-    info("Tentativo modificaParametriNeurone con ID inesistente (atteso errore su stderr):");
+    info("Tentativo modificaParametriNeurone con ID inesistente (atteso errore "
+         "su stderr):");
     rete.modificaParametriNeurone(99, cfgN0);
 
     // 8. Simulazione breve per verificare che la rete giri senza crash
@@ -112,7 +114,7 @@ static void test_neuroni_exp() {
     intestazione("TEST 2 — Neuroni Exp");
 
     // Rete di 3 neuroni Exp con Runge-Kutta
-    Rete rete(3, Label_Type_Neuron::Exp, 'R');
+    Rete rete(3, NeuronModel::Exp, 'R');
     ok("Rete(3, Exp, 'E') creata");
 
     // Modifica parametri del neurone 1
@@ -123,7 +125,8 @@ static void test_neuroni_exp() {
     ok("modificaParametriNeurone(1) su Exp — Vth=-48mV");
 
     // Errore atteso: passare configLIF a un neurone Exp
-    info("Tentativo modificaParametriNeurone con config sbagliata (atteso errore su stderr):");
+    info("Tentativo modificaParametriNeurone con config sbagliata (atteso errore "
+         "su stderr):");
     rete.modificaParametriNeurone(1, configLIF{});
 
     // Connessione con CurrentSyn — Ipeak scalato coerentemente con lo stimolo
@@ -156,14 +159,16 @@ static void test_neuroni_exp() {
 //   - simulazione con sinapsi miste (Current + Conductance sulla stessa rete)
 // ─────────────────────────────────────────────────────────────────────────────
 static void test_conductance_syn() {
+
     intestazione("TEST 3 — ConductanceSyn (sinapsi miste)");
 
     // Rete di 4 neuroni LIF
-    Rete rete(4, Label_Type_Neuron::LIF, 'E');
+    Rete rete(4, NeuronModel::LIF, 'E');
     ok("Rete(4, LIF, 'E') creata");
 
     // Sinapsi eccitatoria conductance-based 0→1  (E_rev ~ 0 mV, AMPA-like)
-    // I = g * (V_post - E_rev) ~ 1e-8 S * 0.065 V = 0.65 nA per spike — significativo
+    // I = g * (V_post - E_rev) ~ 1e-8 S * 0.065 V = 0.65 nA per spike —
+    // significativo
     configConductanceSyn cfgExc;
     cfgExc.peso = 1.0;
     cfgExc.gpeak = 10e-9; // [S]
@@ -181,8 +186,9 @@ static void test_conductance_syn() {
     cfgInh.delay = 1.0 * ms;
     cfgInh.E_rev = -70.0 * mV;
     int idInh = rete.connettiNeuroni(2, 1, cfgInh);
-    int idtest = rete.connettiNeuroni(int IDpre, int IDpost, const TypeConfigSyn& configurazioneSinapsi)
-                     ok("connettiNeuroni(2→1) ConductanceSyn inibitoria (E_rev=-70mV) — ID: " + std::to_string(idInh));
+    // int idtest = rete.connettiNeuroni(int IDpre, int IDpost, const
+    // TypeConfigSyn &configurazioneSinapsi)
+    ok("connettiNeuroni(2→1) ConductanceSyn inibitoria (E_rev=-70mV) — ID: " + std::to_string(idInh));
 
     // Sinapsi CurrentSyn sulla stessa rete (test coesistenza)
     configCurrentSyn cfgCur;
@@ -201,14 +207,17 @@ static void test_conductance_syn() {
     ok("modificaSinapsi(idExc) — gpeak aggiornato a 20e-9 S, delay a 0.5ms");
 
     // Errore atteso: passare configCurrentSyn a una ConductanceSyn
-    info("Tentativo modificaSinapsi con config sbagliata (atteso errore su stderr):");
+    info("Tentativo modificaSinapsi con config sbagliata (atteso errore su "
+         "stderr):");
     rete.modificaSinapsi(idExc, configCurrentSyn{});
 
     // Errore atteso: passare configConductanceSyn a una CurrentSyn
-    info("Tentativo modificaSinapsi con config sbagliata inversa (atteso errore su stderr):");
+    info("Tentativo modificaSinapsi con config sbagliata inversa (atteso errore "
+         "su stderr):");
     rete.modificaSinapsi(idCur, configConductanceSyn{});
 
-    // Simulazione con stimolo su 0 e 2 per attivare entrambe le sinapsi conductance
+    // Simulazione con stimolo su 0 e 2 per attivare entrambe le sinapsi
+    // conductance
     Simulazione sim(rete, 0.1 * ms, 100.0 * ms);
 
     std::vector<int> ids = {0, 2, 3};
@@ -261,7 +270,8 @@ double rumoreUniforme(double centro, double ampiezza) {
     static std::random_device rd;
     static std::mt19937 gen(rd());
 
-    std::uniform_real_distribution<double> distribuzione(centro - ampiezza, centro + ampiezza);
+    std::uniform_real_distribution<double> distribuzione(centro - ampiezza,
+centro + ampiezza);
 
     return distribuzione(gen);
 }
@@ -269,7 +279,7 @@ double rumoreUniforme(double centro, double ampiezza) {
 int main() {
 
     int N = 100;
-    Rete rete(N, Label_Type_Neuron::Exp);
+    Rete rete(N, NeuronModel::Exp);
 
 
     for (int i = 0; i < N / 2; i++) {
@@ -292,14 +302,16 @@ int main() {
     vp.push_back(p);
     sim.iniettaStimoloCostante(v, vp);
 
-    sim.avviaSimulazione("potenzialitest1.bin", "firingtest1.bin", "sinapsitest1.bin");
+    sim.avviaSimulazione("potenzialitest1.bin", "firingtest1.bin",
+"sinapsitest1.bin");
 
     std::cout << "\nFINE SIMULAZIONE \n";
     */
 /*
-std::cout << "=========================================================" << std::endl;
-std::cout << "--- BENCHMARK PER SAMPLY: Rete Biologica Sparsa (15k) ---" << std::endl;
-std::cout << "=========================================================" << std::endl;
+std::cout << "=========================================================" <<
+std::endl; std::cout << "--- BENCHMARK PER SAMPLY: Rete Biologica Sparsa (15k)
+---" << std::endl; std::cout <<
+"=========================================================" << std::endl;
 
 // 1. Parametri di Scala della Rete
 const int N = 150;
@@ -319,16 +331,16 @@ std::cout << "[1/3] Allocazione di " << N << " neuroni..." << std::endl;
 for (int i = 0; i < N; ++i) {
     double V_0 = eV_reset + rumoreGaussiano(0, 2.0 * mV);
     if (i < Ne) {
-        rete.aggiungiNeurone(Neurone(i, V_0, eV_th, eV_rest, eV_reset, eR, eC, eTau_ref));
-    } else {
-        rete.aggiungiNeurone(Neurone(i, V_0, iV_th, iV_rest, iV_reset, iR, iC, iTau_ref));
+        rete.aggiungiNeurone(Neurone(i, V_0, eV_th, eV_rest, eV_reset, eR, eC,
+eTau_ref)); } else { rete.aggiungiNeurone(Neurone(i, V_0, iV_th, iV_rest,
+iV_reset, iR, iC, iTau_ref));
     }
 }
 
 // 2. Generazione Connessioni Sparse (Probabilità 10%)
-std::cout << "[2/3] Generazione sinapsi sparse (Connettivita' 10%)..." << std::endl;
-const double eWeight = +1.0, eIpeak = 1.5 * n * A, eTau_syn = 5.0 * ms;
-const double iWeight = -3.0, iIpeak = 1.5 * n * A, iTau_syn = 10.0 * ms;
+std::cout << "[2/3] Generazione sinapsi sparse (Connettivita' 10%)..." <<
+std::endl; const double eWeight = +1.0, eIpeak = 1.5 * n * A, eTau_syn = 5.0 *
+ms; const double iWeight = -3.0, iIpeak = 1.5 * n * A, iTau_syn = 10.0 * ms;
 
 std::mt19937 gen(12345); // Seed fisso per replicabilità
 std::uniform_real_distribution<double> dist_conn(0.0, 1.0);
@@ -347,7 +359,8 @@ for (int i = 0; i < N; ++i) {
     }
 }
 
-std::cout << " -> Totale Sinapsi Istanziate: " << rete.getNumSinapsi() << std::endl;
+std::cout << " -> Totale Sinapsi Istanziate: " << rete.getNumSinapsi() <<
+std::endl;
 
 // 3. Configurazione Simulazione
 double dt = 0.1 * ms;
@@ -367,16 +380,17 @@ for(int i = 0; i < 100; ++i) {
 }
 sim.iniettaStimoloCostante(idStimolati, paramStimoli);
 
-std::cout << "[3/3] Setup completato. Avvio del calcolo numerico..." << std::endl;
+std::cout << "[3/3] Setup completato. Avvio del calcolo numerico..." <<
+std::endl;
 
 // =========================================================
 // ESECUZIONE SIMULAZIONE (IL LOOP COMPLETO SOTTO PROFILING)
 // =========================================================
 sim.avviaSimulazione("potenziali.bin", "firing.bin", "sinapsi.bin");
 
-std::cout << "=========================================================" << std::endl;
-std::cout << " COMPILATION COMPLETED " << std::endl;
-std::cout << "=========================================================" << std::endl;
+std::cout << "=========================================================" <<
+std::endl; std::cout << " COMPILATION COMPLETED " << std::endl; std::cout <<
+"=========================================================" << std::endl;
 
 std::cout << "--- Test Ring Network (Propagazione ad Anello) ---" << std::endl;
 
@@ -385,7 +399,8 @@ const int numNeuroni = 50;
 Rete rete(numNeuroni);
 
 // 2. Connettiamo i neuroni in un anello chiuso (Ring Topology)
-std::cout << "[CONFIG] Creazione delle connessioni sinaptiche ad anello..." << std::endl;
+std::cout << "[CONFIG] Creazione delle connessioni sinaptiche ad anello..." <<
+std::endl;
 
 // Connettiamo 0->1, 1->2, 2->3, 3->4
 for (int i = 0; i < numNeuroni - 1; ++i) {
@@ -408,17 +423,17 @@ std::vector<parametriStimoloSeno> paramSeno;
 parametriStimoloSeno pCost;
 pCost.timeStart = 50.0 * ms;   // Lo stimolo parte a 5 ms
 pCost.timeEnd = 500.0 * ms;    // Lo stimolo si interrompe a 25 ms
-pCost.ampiezza = 40.0 * n * A; // Corrente forte sul primo neurone per innescare il ciclo
-pCost.fase = 0.0;
-pCost.frequenza = 40 * Hz;
+pCost.ampiezza = 40.0 * n * A; // Corrente forte sul primo neurone per innescare
+il ciclo pCost.fase = 0.0; pCost.frequenza = 40 * Hz;
 paramSeno.push_back(pCost);
 
-std::cout << "[TEST] Iniezione stimolo costante SOLO sul neurone 0..." << std::endl;
-sim.iniettaStimoloSeno(idCostante, paramSeno);
+std::cout << "[TEST] Iniezione stimolo costante SOLO sul neurone 0..." <<
+std::endl; sim.iniettaStimoloSeno(idCostante, paramSeno);
 
 // 5. ESECUZIONE SIMULAZIONE
 std::cout << "\n[TEST] Avvio della simulazione ad anello..." << std::endl;
-sim.avviaSimulazione("test_potenziali.bin", "test_firing.bin", "test_sinapsi.bin");
+sim.avviaSimulazione("test_potenziali.bin", "test_firing.bin",
+"test_sinapsi.bin");
 
 std::cout << "--- Simulazione completata! ---" << std::endl;
 */
@@ -454,11 +469,9 @@ Rete rete;
 // creo i neuroni eccitatori e inibitori
 for (int i = 0; i < N; ++i) {
     double V_0 = eV_reset + rumoreGaussiano(0, 2 * mV);
-    // std :: cout << "Potenziale iniziale : " << V_0 << " = " << eV_reset << " + " << V_0-eV_reset << "\n";
-    if (i < Ne) {
-        Neurone neurone(i, V_0, eV_th, eV_rest, eV_reset, eR, eC, eTau_ref);
-        rete.aggiungiNeurone(neurone);
-    } else {
+    // std :: cout << "Potenziale iniziale : " << V_0 << " = " << eV_reset << "
++ " << V_0-eV_reset << "\n"; if (i < Ne) { Neurone neurone(i, V_0, eV_th,
+eV_rest, eV_reset, eR, eC, eTau_ref); rete.aggiungiNeurone(neurone); } else {
         Neurone neurone(i, V_0, iV_th, iV_rest, iV_reset, iR, iC, iTau_ref);
         rete.aggiungiNeurone(neurone);
     }

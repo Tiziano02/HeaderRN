@@ -3,14 +3,14 @@
 
 #include "LIF.hpp"
 #include "Exp.hpp"
-#include<variant>
-//#include "AdExp.hpp"
-//#include "Izhikevich.hpp"
+#include <variant>
+// #include "AdExp.hpp"
+// #include "Izhikevich.hpp"
 
-enum class Label_Type_Neuron  {LIF, Exp};
+enum class NeuronModel { LIF, Exp };
 
 using TypeConfig = std::variant<configLIF, configExp>;
 
-using TypeNeuron  = std::variant<LIF, Exp>;
+using TypeNeuron = std::variant<LIF, Exp>;
 
 #endif

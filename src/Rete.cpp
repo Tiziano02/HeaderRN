@@ -6,20 +6,20 @@
 // Costruttore
 // ─────────────────────────────────────────────────────────────────────────────
 
-Rete::Rete(int N, Label_Type_Neuron typeNeurone, char typeintegratore) {
+Rete::Rete(int N, NeuronModel typeNeurone, char typeintegratore) {
 
     neuroni_.reserve(N);
 
     switch (typeNeurone) {
 
-    case Label_Type_Neuron::LIF: {
+    case NeuronModel::LIF: {
         configLIF configBase;
         for (int i = 0; i < N; ++i)
             aggiungiNeurone(i, typeintegratore, configBase);
         break;
     }
 
-    case Label_Type_Neuron::Exp: {
+    case NeuronModel::Exp: {
         configExp configBase;
         for (int i = 0; i < N; ++i)
             aggiungiNeurone(i, typeintegratore, configBase);
@@ -126,13 +126,6 @@ void Rete::modificaParametriNeurone(int id, const TypeConfig& configurazione) {
 // Sinapsi
 // ─────────────────────────────────────────────────────────────────────────────
 
-/*
- * connettiNeuroni — aggiunge una sinapsi e restituisce il suo ID univoco.
- *
- * L'ID è generato internamente (prossimoIdSyn_) e registrato in idToIndexSyn_.
- * Questo risolve il problema di identificazione quando esistono più sinapsi
- * tra la stessa coppia (IDpre, IDpost): ogni sinapsi ha un ID indipendente.
- */
 int Rete::connettiNeuroni(int IDpre, int IDpost, const TypeConfigSyn& configurazioneSinapsi) {
 
     if (!hasNeurone(IDpre) || !hasNeurone(IDpost)) {
@@ -166,18 +159,6 @@ int Rete::connettiNeuroni(int IDpre, int IDpost, const TypeConfigSyn& configuraz
     return idAssegnato;
 }
 
-/*
- * modificaSinapsi — aggiorna i parametri di una sinapsi identificata dal suo ID.
- *
- * Precondizione: va chiamata PRIMA di avviaSimulazione() (e quindi prima di prepare()).
- * Questa è una regola fondamentale del framework: la rete non può essere modificata
- * a simulazione avviata. Se si modifica il delay_, il ring viene ricostruito
- * correttamente solo se prepare() non è ancora stato chiamato (o non lo sarà mai
- * con un dt diverso da quello della simulazione finale).
- *
- * Se il tipo di configurazione non corrisponde al tipo della sinapsi esistente
- * viene stampato un errore e non viene modificato nulla.
- */
 void Rete::modificaSinapsi(int IDsin, const TypeConfigSyn& configurazioneSinapsi) {
 
     if (!hasSinapsi(IDsin)) {
@@ -219,6 +200,19 @@ void Rete::modificaSinapsi(int IDsin, const TypeConfigSyn& configurazioneSinapsi
         sinapsi_[index]);
 }
 
+std::vector<int> Rete::getSinapsiIds(int pre, int post) const {
+    std::vector<int> ids;
+    for (const auto& [id, index] : idToIndexSyn_) {
+        const auto& syn = sinapsi_[index];
+        int IDpre = std::visit([](const auto& s) { return s.getIdPre(); }, syn);
+        int IDpost = std::visit([](const auto& s) { return s.getIdPost(); }, syn);
+        if (IDpre == pre && IDpost == post) {
+            ids.push_back(id);
+        }
+    }
+    return ids;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Metodi operativi interni
 // ─────────────────────────────────────────────────────────────────────────────
@@ -229,16 +223,6 @@ void Rete::prepare(double dt) {
     }
 }
 
-/*
- * step — avanza lo stato dell'intera rete di un passo dt.
- *
- * Le due tipologie di sinapsi hanno firme di update() diverse:
- *   CurrentSyn::update(dt, preFired)
- *   ConductanceSyn::update(dt, preFired, V_post)
- *
- * Rete usa std::visit con if constexpr per chiamare la firma corretta,
- * recuperando V_post dal neurone post-sinaptico solo quando serve.
- */
 void Rete::step(double dt) {
 
     std::fill(inputTotale_.begin(), inputTotale_.end(), 0.0);
@@ -285,11 +269,3 @@ void Rete::aggiornaStatoRete() {
         statoSinapsi_[i] = std::visit([](const auto& s) { return s.getCurrent(); }, sinapsi_[i]);
     }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Getter
-// ─────────────────────────────────────────────────────────────────────────────
-
-const std::vector<double>& Rete::getPointerStatoNeuroni() const { return statoNeuroni_; }
-const std::vector<double>& Rete::getPointerStatoFiring() const { return statoFiring_; }
-const std::vector<double>& Rete::getPointerStatoSinapsi() const { return statoSinapsi_; }
