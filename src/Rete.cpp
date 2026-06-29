@@ -269,3 +269,21 @@ void Rete::aggiornaStatoRete() {
         statoSinapsi_[i] = std::visit([](const auto& s) { return s.getCurrent(); }, sinapsi_[i]);
     }
 }
+
+double Rete::getMinTau() const {
+    double minTau = std::numeric_limits<double>::max();
+
+    // Controlla i neuroni
+    for (const auto& n : neuroni_) {
+        double tau = std::visit([](const auto& neuron) { return neuron.tau_; }, n);
+        minTau = std::min(minTau, tau);
+    }
+
+    // Controlla le sinapsi (sia Current che Conductance)
+    for (const auto& s : sinapsi_) {
+        double tau = std::visit([](const auto& syn) { return syn.tau_; }, s);
+        minTau = std::min(minTau, tau);
+    }
+
+    return minTau;
+}

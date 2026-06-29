@@ -129,6 +129,7 @@ class Rete {
     void step(double dt);     // Avanza la rete di un passo temporale.
     void aggiornaStatoRete(); // Aggiorna i vettori di stato dopo lo step.
     void prepare(double dt);  // Prepara la rete (es. ring buffer per i delay).
+    double getMinTau() const;
 
   public:
     // /**

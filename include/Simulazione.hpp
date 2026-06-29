@@ -1,63 +1,53 @@
 #ifndef SIMULAZIONE_HPP
 #define SIMULAZIONE_HPP
 
-#include "Input.hpp"
 #include "Rete.hpp"
-#include "UnitaSI.hpp"
-#include "Utility.hpp"
+#include "Input.hpp"
 
 #include <fstream>
-#include <memory>
-#include <cmath>
-/*
- * Simulazione — coordina la rete, gli input esterni e l'output su file.
+
+/**
+ * Simulazione — Coordina la rete, gli stimoli esterni e l'output su file.
  *
- * La simulazione gestisce la griglia temporale e il loop principale:
- *   stepTotali = round(T / dt)
- *   time(k) = k * dt,  k = 1, 2, ..., stepTotali
+ * La simulazione gestisce la griglia temporale e il loop principale.
  *
- * Il primo dato salvato sui file corrisponde a time = dt (dopo il primo step),
- * non a time = 0 (stato iniziale).
+ * ============================================================================
+ * STIMOLI ESTERNI
+ * ============================================================================
+ * La simulazione utilizza un unico vettore di StimoloCollegato per gestire
+ * tutti gli stimoli esterni. Ogni stimolo è un std::variant che può contenere
+ * diversi tipi (costante, sinusoidale, ecc.).
  *
- * Formato dei file di output — ogni riga:
- *   time  val1  val2  ...  valN
- * dove i valori sono in unità SI (V, A, s).
+ * Per aggiungere uno stimolo, usare iniettaStimoli().
  *
- * Attributi:
- *   rete_          rete neurale da simulare (copia interna)
- *   inputEsterni_  stimoli esterni per l'intera simulazione
- *   dt_            passo temporale [s]
- *   T_             durata totale [s]
- *   stepCorrente_  indice dello step corrente
- *   stepTotali_    numero totale di step = round(T/dt)
- *
- * Metodi operativi:
- *   aggiungiInputEsterni(inputs)                       — associa gli input esterni alla simulazione
- *   avviaSimulazione(filenameV, filenameF, filenameS)  — esegue la simulazione e salva i risultati
+ * ============================================================================
+ * OUTPUT
+ * ============================================================================
+ * I risultati vengono salvati in file binari con un header iniziale di 4 byte
+ * che specifica il numero di colonne (tempo + dati). Usare gli script Python
+ * forniti per leggere i file.
  */
 class Simulazione {
 
   private:
-    // rete su cui va fatta la simulazione
-    Rete rete_;
+    Rete rete_; // Rete da simulare
 
-    // attributi per gestione Input Esterni
-    std::vector<rigaRegistroStimolo> registroStimoli_;
-    std::vector<parametriStimoloCostante> databaseStimoloCostante_;
-    std::vector<parametriStimoloSeno> databaseStimoloSeno_;
+    // ---------- Stimoli Esterni ----------
+    std::vector<stimolo> stimoli_; // Un unico vettore per tutti gli stimoli
 
-    // attributi per definire una simulazione
-    double dt_;
-    int stepCorrente_;
-    int stepTotali_;
+    // ---------- Parametri Temporali ----------
+    double dt_;        // Passo temporale [s]
+    int stepCorrente_; // Step attuale
+    int stepTotali_;   // Numero totale di step
 
-    // attributi per I/O
+    // ---------- I/O ----------
     std::ofstream filePotenziali_;
     std::ofstream fileFiring_;
     std::ofstream fileSinapsi_;
     std::string fileNameV_;
     std::string fileNameF_;
     std::string fileNameS_;
+
     std::vector<char> bufferV_;
     std::vector<char> bufferF_;
     std::vector<char> bufferS_;
@@ -67,86 +57,59 @@ class Simulazione {
     size_t posizioneBuffer_ = 0;
     size_t stepsPerFlush_ = 0;
 
-    // metodi interni per I/O
+    // ---------- Metodi Interni ----------
     void inizializzaOutput();
     void loadStatoRete(double time);
     void writeFile();
 
-    // metodi interi per gli stimoli
-    template <typename tipologiaStimolo> bool controlloParametri(std::vector<int> &listaID, std::vector<tipologiaStimolo> &listaPSarametri) {
-        if (listaID.size() != listaPSarametri.size()) {
-            std::cerr << "[Simulazione] errore: id.size() (" << listaID.size() << ") != parametri.size() (" << listaPSarametri.size() << ").\n";
-            return false;
-        }
-
-        for (size_t i = 0; i < listaID.size(); ++i) {
-            if (!rete_.hasNeurone(listaID[i])) {
-                std::cerr << "[Simulazione] errore: neurone ID " << listaID[i] << " non trovato nella rete.\n";
-                return false; // nessuna modifica è stata fatta finora
-            }
-        }
-        return true;
-    };
-
-    // PRECONDIZIONE: il chiamante deve aver già validato listaID/listaParametri con controlloParametri().
-    // Questo metodo non rivalida per evitare il doppio controllo.
-    template <typename tipologiaStimolo> void aggiungiStimolo(std::vector<int> &listaID, std::vector<tipologiaStimolo> &listaParametri) {
-
-        // Riserviamo spazio nel registro generale degli stimoli
-        registroStimoli_.reserve(registroStimoli_.size() + listaParametri.size());
-
-        // 1. Fase di instradamento basata sul TIPO passatoci a tempo di compilazione
-        // Usiamo 'if constexpr' così il compilatore genera solo il codice corretto per quel tipo!
-        if constexpr (std::is_same_v<tipologiaStimolo, parametriStimoloCostante>) {
-            databaseStimoloCostante_.reserve(databaseStimoloCostante_.size() + listaParametri.size());
-        } else if constexpr (std::is_same_v<tipologiaStimolo, parametriStimoloSeno>) {
-            databaseStimoloSeno_.reserve(databaseStimoloSeno_.size() + listaParametri.size());
-        }
-
-        // 2. Loop unico di inserimento
-        for (size_t i = 0; i < listaID.size(); i++) {
-
-            size_t indiceAssegnatoDB = 0;
-            Tipo_stimolo tipoAssegnato;
-
-            // Gestione differenziata dei database e dei tipi
-            if constexpr (std::is_same_v<tipologiaStimolo, parametriStimoloCostante>) {
-                databaseStimoloCostante_.push_back(listaParametri[i]);
-                indiceAssegnatoDB = databaseStimoloCostante_.size() - 1;
-                tipoAssegnato = Tipo_stimolo::Costante;
-            } else if constexpr (std::is_same_v<tipologiaStimolo, parametriStimoloSeno>) {
-                databaseStimoloSeno_.push_back(listaParametri[i]);
-                indiceAssegnatoDB = databaseStimoloSeno_.size() - 1;
-                tipoAssegnato = Tipo_stimolo::Sinusoidale;
-            }
-
-            // 3. Popolamento della riga del registro (Identica per tutti!)
-            rigaRegistroStimolo tmp_rigaRegistro;
-            tmp_rigaRegistro.id = listaID[i];
-            tmp_rigaRegistro.indexNeurone = rete_.getIndex(listaID[i]);
-            tmp_rigaRegistro.rigaDB = indiceAssegnatoDB; // <--- Dinamico e corretto!
-            tmp_rigaRegistro.tipo = tipoAssegnato;       // <--- Dinamico e corretto!
-            tmp_rigaRegistro.stepStart = static_cast<int>(std::round(listaParametri[i].timeStart / dt_));
-            tmp_rigaRegistro.stepEnd = static_cast<int>(std::round(listaParametri[i].timeEnd / dt_));
-
-            registroStimoli_.push_back(tmp_rigaRegistro);
-        }
-    }
-
-  public:
-    Simulazione(const Rete &rete, double dt, double T) : rete_(rete), dt_(dt), stepCorrente_(0), stepTotali_(static_cast<int>(std::round(T / dt))) {}
-
-    // tools Simualzione - inserimento degli stimoli
-    void iniettaStimoloCostante(std::vector<int> &listaID, std::vector<parametriStimoloCostante> &listaParametri);
-    void iniettaStimoloSeno(std::vector<int> &listaID, std::vector<parametriStimoloSeno> &listaParametri);
-
-    // tools Simulazione - aggiorna il vettore stimoli_ dell'oggetto rete_ --> calcola tutti gli stimoli al tempo t
+    /**
+     * Valuta tutti gli stimoli al tempo t e li applica alla rete.
+     *
+     * Itera su stimoli_ e usa std::visit per calcolare il valore corrente
+     * di ogni stimolo in base al tipo (costante, sinusoidale, ecc.).
+     */
     void valutaStimoli(double t);
 
-    // metodi operativi
-    void avviaSimulazione(const std::string &filenameV, const std::string &filenameF, const std::string &filenameS);
+  public:
+    /**
+     * Costruisce una simulazione.
+     *
+     * @param rete Rete da simulare (viene copiata internamente).
+     * @param dt Passo temporale [s].
+     * @param T Durata totale della simulazione [s].
+     *
+     * @warning Verifica che dt non sia troppo grande rispetto a tau_min.
+     */
+    Simulazione(const Rete& rete, double dt, double T);
 
-    // metodi getter
+    /**
+     * Inietta una lista di stimoli nella simulazione.
+     *
+     * @param stimoli Vettore di coppie (ID neurone, parametri stimolo).
+     *
+     * @note I parametri possono essere StimoloCostante o StimoloSinusoidale.
+     * @warning I neuroni devono esistere; altrimenti viene stampato un errore.
+     *
+     * Esempio:
+     *   sim.iniettaStimoli({
+     *       {0, StimoloCostante{0.0, 100.0*ms, 20e-9}},
+     *       {2, StimoloSinusoidale{0.0, 100.0*ms, 10e-9, 40*Hz, 0.0}}
+     *   });
+     */
+    void iniettaStimoli(const std::vector<stimolo>& stimoli);
+
+    /**
+     * Avvia la simulazione e salva i risultati su file binari.
+     *
+     * @param filenameV Nome file per i potenziali.
+     * @param filenameF Nome file per i firing.
+     * @param filenameS Nome file per le correnti sinaptiche.
+     */
+    void avviaSimulazione(const std::string& filenameV, const std::string& filenameF, const std::string& filenameS);
+
+    /**
+     * @return Durata totale della simulazione [s].
+     */
     double getTempoTotale() const { return stepTotali_ * dt_; }
 
     ~Simulazione() = default;
